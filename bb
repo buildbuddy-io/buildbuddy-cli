@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from contextlib import closing
 from distutils.version import LooseVersion
 import json
