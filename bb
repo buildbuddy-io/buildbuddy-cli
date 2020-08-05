@@ -396,11 +396,15 @@ http_archive(
     name = "io_buildbuddy_toolchain",
     strip_prefix = "toolchain-master",
     urls = ["https://github.com/buildbuddy-io/toolchain/archive/master.tar.gz"],
-)
+) 
 
-load("@io_buildbuddy_toolchain//:rules.bzl", "register_buildbuddy_toolchain")
+load("@io_buildbuddy_toolchain//:deps.bzl", "buildbuddy_deps")
 
-register_buildbuddy_toolchain(name = "buildbuddy_toolchain")
+buildbuddy_deps()
+
+load("@io_buildbuddy_toolchain//:rules.bzl", "buildbuddy")
+
+buildbuddy(name = "buildbuddy_toolchain")
 """)
             f.close()
 
@@ -413,6 +417,8 @@ register_buildbuddy_toolchain(name = "buildbuddy_toolchain")
     argv.append("--host_javabase=@buildbuddy_toolchain//:javabase_jdk8")
     argv.append("--java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
     argv.append("--host_java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
+    argv.append("--host_platform=@buildbuddy_toolchain//:platform")
+    argv.append("--platforms=@buildbuddy_toolchain//:platform")
     argv.append("--jobs=100")
 
     if argv[0] == "--print_env":
