@@ -418,6 +418,7 @@ buildbuddy(name = "buildbuddy_toolchain")
     argv.append("--java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
     argv.append("--host_java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
     argv.append("--host_platform=@buildbuddy_toolchain//:platform")
+    argv.append("--extra_execution_platforms=@buildbuddy_toolchain//:platform")
     argv.append("--platforms=@buildbuddy_toolchain//:platform")
     argv.append("--jobs=100")
 
