@@ -408,10 +408,15 @@ buildbuddy(name = "buildbuddy_toolchain")
 """)
             f.close()
 
-    argv.append("--bes_results_url=https://app.buildbuddy.dev/invocation/")
-    argv.append("--bes_backend=grpcs://cloud.buildbuddy.dev")
-    argv.append("--remote_cache=grpcs://cloud.buildbuddy.dev")
-    argv.append("--remote_executor=grpcs://cloud.buildbuddy.dev")
+    buildbuddyUrl = "buildbuddy.io"
+    if "--dev" in argv:
+        argv.remove("--dev")
+        buildbuddyUrl = "buildbuddy.dev"
+
+    argv.append("--bes_results_url=https://app." + buildbuddyUrl + "/invocation/")
+    argv.append("--bes_backend=grpcs://cloud." + buildbuddyUrl)
+    argv.append("--remote_cache=grpcs://cloud." + buildbuddyUrl)
+    argv.append("--remote_executor=grpcs://cloud." + buildbuddyUrl)
     argv.append("--crosstool_top=@buildbuddy_toolchain//:toolchain")
     argv.append("--javabase=@buildbuddy_toolchain//:javabase_jdk8")
     argv.append("--host_javabase=@buildbuddy_toolchain//:javabase_jdk8")
