@@ -345,6 +345,20 @@ def execute_bazel(bazel_path, argv):
 
     # We cannot use close_fds on Windows, so disable it there.
     p = subprocess.Popen([cmd['exec']] + cmd['args'], close_fds=os.name != "nt", env=cmd['env'])
+    wait(p)
+
+def execute_docker(argv):
+    image = "gcr.io/flame-public/executor-docker-default:latest"
+    bb_url = "https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb"
+    docker_cmd = "docker run -it --rm -v " + os.path.abspath(os.getcwd()) + ":/workspace " + image + " /bin/bash -c"
+    cmd = "curl -fsSL -o bb " + bb_url + "; chmod 700 bb; cd workspace; ../bb " + " ".join(argv)
+    args = docker_cmd.split(" ") + [cmd]
+
+    # We cannot use close_fds on Windows, so disable it there.
+    p = subprocess.Popen(args, close_fds=os.name != "nt", env=os.environ.copy())
+    wait(p)
+
+def wait(p):
     while True:
         try:
             return p.wait()
@@ -352,7 +366,6 @@ def execute_bazel(bazel_path, argv):
             # Bazel will also get the signal and terminate.
             # We should continue waiting until it does so.
             pass
-
 
 def get_bazel_path():
     bazelisk_directory = get_bazelisk_directory()
@@ -371,8 +384,6 @@ def get_bazel_path():
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-
-    bazel_path = get_bazel_path()
 
     argv = argv[1:]
     
@@ -427,13 +438,11 @@ buildbuddy(name = "buildbuddy_toolchain")
     argv.append("--platforms=@buildbuddy_toolchain//:platform")
     argv.append("--jobs=100")
 
-    if argv[0] == "--print_env":
-        cmd = make_bazel_cmd(bazel_path, argv)
-        env = cmd['env']
-        for key in env:
-            print('{}={}'.format(key, env[key]))
-        return 0
+    if "--docker" in argv:
+        argv.remove("--docker")
+        return execute_docker(argv)
 
+    bazel_path = get_bazel_path()
     return execute_bazel(bazel_path, argv)
 
 
