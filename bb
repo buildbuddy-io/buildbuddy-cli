@@ -373,6 +373,9 @@ def wait(p):
             # We should continue waiting until it does so.
             pass
 
+def update():
+    return execute("curl -fsSL -o bb https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb && chmod 755 bb && sudo mv bb " + os.path.abspath(__file__))
+
 def get_bazel_path():
     bazelisk_directory = get_bazelisk_directory()
     maybe_makedirs(bazelisk_directory)
@@ -392,6 +395,9 @@ def main(argv=None):
         argv = sys.argv
 
     argv = argv[1:]
+
+    if argv[0] == "update":
+        return update()
 
     if len(argv) == 3 and argv[0] == "new":
         return execute("git clone " + argv[2] + " " + argv[1])
@@ -441,6 +447,11 @@ buildbuddy(name = "buildbuddy_toolchain")
         return execute_bazel(argv)
 
     argv.append("--remote_cache=grpcs://cloud." + buildbuddyUrl)
+
+    if "--cache" in argv:
+        argv.remove("--cache")
+        return execute_bazel(argv)
+
     argv.append("--remote_executor=grpcs://cloud." + buildbuddyUrl)
     argv.append("--crosstool_top=@buildbuddy_toolchain//:toolchain")
     argv.append("--javabase=@buildbuddy_toolchain//:javabase_jdk8")
