@@ -339,6 +339,18 @@ def make_bazel_cmd(bazel_path, argv):
         'env': env,
     }
 
+def get_bazel_path():
+    bazelisk_directory = get_bazelisk_directory()
+    maybe_makedirs(bazelisk_directory)
+
+    bazel_version = decide_which_bazel_version_to_use()
+    bazel_version, is_commit = resolve_version_label_to_number_or_commit(
+        bazelisk_directory, bazel_version
+    )
+
+    # TODO: Support other forks just like Go version
+    bazel_directory = os.path.join(bazelisk_directory, "downloads", BAZEL_UPSTREAM)
+    return download_bazel_into_directory(bazel_version, is_commit, bazel_directory)
 
 def execute_bazel(argv):
     cmd = make_bazel_cmd(get_bazel_path(), argv)
@@ -373,35 +385,7 @@ def wait(p):
             # We should continue waiting until it does so.
             pass
 
-def update():
-    return execute("curl -fsSL -o bb https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb && chmod 755 bb && sudo mv bb " + os.path.abspath(__file__))
-
-def get_bazel_path():
-    bazelisk_directory = get_bazelisk_directory()
-    maybe_makedirs(bazelisk_directory)
-
-    bazel_version = decide_which_bazel_version_to_use()
-    bazel_version, is_commit = resolve_version_label_to_number_or_commit(
-        bazelisk_directory, bazel_version
-    )
-
-    # TODO: Support other forks just like Go version
-    bazel_directory = os.path.join(bazelisk_directory, "downloads", BAZEL_UPSTREAM)
-    return download_bazel_into_directory(bazel_version, is_commit, bazel_directory)
-
-
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv
-
-    argv = argv[1:]
-
-    if argv[0] == "update":
-        return update()
-
-    if len(argv) == 3 and argv[0] == "new":
-        return execute("git clone " + argv[2] + " " + argv[1])
-    
+def update_workspace_if_necessary():
     with open('WORKSPACE') as f:
         workspaceContents = f.read()
 
@@ -411,7 +395,6 @@ def main(argv=None):
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 """)
             f.close()
-
 
         if 'buildbuddy-io/toolchain' not in workspaceContents:
             f = open("WORKSPACE","a")
@@ -433,6 +416,28 @@ load("@io_buildbuddy_toolchain//:rules.bzl", "buildbuddy")
 buildbuddy(name = "buildbuddy_toolchain")
 """)
             f.close()
+
+def update():
+    return execute("curl -fsSL -o bb https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb && chmod 755 bb && sudo mv bb " + os.path.abspath(__file__))
+
+def new(argv):
+    if len(argv) != 3:
+        return print("usage: bb new projectname https://github.com/foo/bar")
+    return execute("git clone " + argv[2] + " " + argv[1])
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
+    argv = argv[1:]
+
+    if argv[0] == "update":
+        return update()
+
+    if argv[0] == "new":
+        return new(argv)
+    
+    update_workspace_if_necessary()
 
     buildbuddyUrl = "buildbuddy.io"
     if "--dev" in argv:
