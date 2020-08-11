@@ -350,8 +350,10 @@ def execute_bazel(bazel_path, argv):
 def execute_docker(argv):
     image = "gcr.io/flame-public/executor-docker-default:latest"
     bb_url = "https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb"
-    docker_cmd = "docker run -it --rm -v " + os.path.abspath(os.getcwd()) + ":/workspace " + image + " /bin/bash -c"
-    cmd = "curl -fsSL -o bb " + bb_url + "; chmod 700 bb; cd workspace; ../bb " + " ".join(argv)
+    workspace_dir = os.path.abspath(os.getcwd())
+    cache_dir = os.path.expanduser("~/.bb-cache")
+    docker_cmd = "docker run -it --rm -v " + workspace_dir + ":/workspace -v " + cache_dir + ":/cache " + image + " /bin/bash -c"
+    cmd = "curl -fsSL -o bb " + bb_url + "; chmod 700 bb; cd workspace; ../bb " + " ".join(argv) + " --repository_cache=/cache/"
     args = docker_cmd.split(" ") + [cmd]
 
     # We cannot use close_fds on Windows, so disable it there.
