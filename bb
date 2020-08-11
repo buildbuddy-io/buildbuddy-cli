@@ -340,8 +340,8 @@ def make_bazel_cmd(bazel_path, argv):
     }
 
 
-def execute_bazel(bazel_path, argv):
-    cmd = make_bazel_cmd(bazel_path, argv)
+def execute_bazel(argv):
+    cmd = make_bazel_cmd(get_bazel_path(), argv)
 
     # We cannot use close_fds on Windows, so disable it there.
     p = subprocess.Popen([cmd['exec']] + cmd['args'], close_fds=os.name != "nt", env=cmd['env'])
@@ -358,6 +358,10 @@ def execute_docker(argv):
 
     # We cannot use close_fds on Windows, so disable it there.
     p = subprocess.Popen(args, close_fds=os.name != "nt", env=os.environ.copy())
+    wait(p)
+
+def execute(command):
+    p = subprocess.Popen(command.split(" "), close_fds=os.name != "nt", env=os.environ.copy())
     wait(p)
 
 def wait(p):
@@ -388,6 +392,9 @@ def main(argv=None):
         argv = sys.argv
 
     argv = argv[1:]
+
+    if len(argv) == 3 and argv[0] == "new":
+        return execute("git clone " + argv[2] + " " + argv[1])
     
     with open('WORKSPACE') as f:
         workspaceContents = f.read()
@@ -428,6 +435,11 @@ buildbuddy(name = "buildbuddy_toolchain")
 
     argv.append("--bes_results_url=https://app." + buildbuddyUrl + "/invocation/")
     argv.append("--bes_backend=grpcs://cloud." + buildbuddyUrl)
+
+    if "--local" in argv:
+        argv.remove("--local")
+        return execute_bazel(argv)
+
     argv.append("--remote_cache=grpcs://cloud." + buildbuddyUrl)
     argv.append("--remote_executor=grpcs://cloud." + buildbuddyUrl)
     argv.append("--crosstool_top=@buildbuddy_toolchain//:toolchain")
@@ -444,8 +456,7 @@ buildbuddy(name = "buildbuddy_toolchain")
         argv.remove("--docker")
         return execute_docker(argv)
 
-    bazel_path = get_bazel_path()
-    return execute_bazel(bazel_path, argv)
+    return execute_bazel(argv)
 
 
 if __name__ == "__main__":
