@@ -436,6 +436,9 @@ def main(argv=None):
 
     if argv[0] == "new":
         return new(argv)
+
+    if argv[0] == "build" && len(argv) == 1:
+        argv.append("//...")
     
     update_workspace_if_necessary()
 
