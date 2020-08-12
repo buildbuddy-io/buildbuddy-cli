@@ -373,7 +373,7 @@ def execute_docker(argv):
     wait(p)
 
 def execute(command):
-    p = subprocess.Popen(command.split(" "), close_fds=os.name != "nt", env=os.environ.copy())
+    p = subprocess.Popen(["/bin/bash", "-c", command], close_fds=os.name != "nt", env=os.environ.copy())
     wait(p)
 
 def wait(p):
