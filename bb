@@ -431,15 +431,15 @@ def main(argv=None):
 
     argv = argv[1:]
 
-    if argv[0] == "update":
+    if len(argv) > 0 and argv[0] == "update":
         return update()
 
-    if argv[0] == "new":
+    if len(argv) > 0 and argv[0] == "new":
         return new(argv)
 
-    if argv[0] == "build" and len(argv) == 1:
+    if len(argv) > 0 and argv[0] == "build" and len(argv) == 1:
         argv.append("//...")
-    
+
     update_workspace_if_necessary()
 
     buildbuddyUrl = "buildbuddy.io"
