@@ -450,27 +450,24 @@ def main(argv=None):
 
     argv.append("--bes_results_url=https://app." + buildbuddyUrl + "/invocation/")
     argv.append("--bes_backend=grpcs://cloud." + buildbuddyUrl)
-
-    if "--local" in argv:
-        argv.remove("--local")
-        return execute_bazel(argv)
-
-    argv.append("--remote_cache=grpcs://cloud." + buildbuddyUrl)
+    argv.append("--tool_tag=bb")
 
     if "--cache" in argv:
         argv.remove("--cache")
-        return execute_bazel(argv)
+        argv.append("--remote_cache=grpcs://cloud." + buildbuddyUrl)
 
-    argv.append("--remote_executor=grpcs://cloud." + buildbuddyUrl)
-    argv.append("--crosstool_top=@buildbuddy_toolchain//:toolchain")
-    argv.append("--javabase=@buildbuddy_toolchain//:javabase_jdk8")
-    argv.append("--host_javabase=@buildbuddy_toolchain//:javabase_jdk8")
-    argv.append("--java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
-    argv.append("--host_java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
-    argv.append("--host_platform=@buildbuddy_toolchain//:platform")
-    argv.append("--extra_execution_platforms=@buildbuddy_toolchain//:platform")
-    argv.append("--platforms=@buildbuddy_toolchain//:platform")
-    argv.append("--jobs=100")
+    if "--remote" in argv:
+        argv.remove("--remote")
+        argv.append("--remote_executor=grpcs://cloud." + buildbuddyUrl)
+        argv.append("--crosstool_top=@buildbuddy_toolchain//:toolchain")
+        argv.append("--javabase=@buildbuddy_toolchain//:javabase_jdk8")
+        argv.append("--host_javabase=@buildbuddy_toolchain//:javabase_jdk8")
+        argv.append("--java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
+        argv.append("--host_java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8")
+        argv.append("--host_platform=@buildbuddy_toolchain//:platform")
+        argv.append("--extra_execution_platforms=@buildbuddy_toolchain//:platform")
+        argv.append("--platforms=@buildbuddy_toolchain//:platform")
+        argv.append("--jobs=100")
 
     if "--docker" in argv:
         argv.remove("--docker")
