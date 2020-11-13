@@ -6,7 +6,7 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 # gazelle:exclude node_modules
 # Prefer generated BUILD files to be called BUILD over BUILD.bazel
 # gazelle:build_file_name BUILD,BUILD.bazel
-# gazelle:prefix github.com/buildbuddy-io/buildbuddy-internal
+# gazelle:prefix github.com/buildbuddy-io/buildbuddy-cli
 # gazelle:resolve go github.com/buildbuddy-io/buildbuddy/proto/invocation @com_github_buildbuddy_io_buildbuddy//proto:invocation_go_proto
 # gazelle:resolve go github.com/buildbuddy-io/buildbuddy/proto/remote_execution @com_github_buildbuddy_io_buildbuddy//proto:remote_execution_go_proto
 # gazelle:resolve go github.com/buildbuddy-io/buildbuddy/proto/build_event_stream @com_github_buildbuddy_io_buildbuddy//proto:build_event_stream_go_proto
