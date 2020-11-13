@@ -31,6 +31,9 @@ func main() {
 		}
 		bbHome = filepath.Join(userCacheDir, "buildbuddy")
 	}
+	if err := os.MkdirAll(bbHome, 0755); err != nil {
+		return false, err
+	}
 
 	updated, err := sidecar.MaybeUpdateSidecar(ctx, bbHome)
 	if err != nil {
