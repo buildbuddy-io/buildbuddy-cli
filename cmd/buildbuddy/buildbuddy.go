@@ -9,6 +9,7 @@ import (
 
 	"github.com/bazelbuild/bazelisk/core"
 	"github.com/bazelbuild/bazelisk/repositories"
+	"github.com/buildbuddy-io/buildbuddy-cli/parser"
 	"github.com/buildbuddy-io/buildbuddy-cli/sidecar"
 )
 
@@ -32,9 +33,14 @@ func main() {
 		bbHome = filepath.Join(userCacheDir, "buildbuddy")
 	}
 	if err := os.MkdirAll(bbHome, 0755); err != nil {
-		return false, err
+		die(-1, err)
 	}
 
+	opts, err := parser.ParseRCFile(".bazelrc")
+	if err != nil {
+		log.Printf("Error parsing .bazelrc file: %s", err.Error())
+	}
+	log.Printf("opts: %s", opts)
 	updated, err := sidecar.MaybeUpdateSidecar(ctx, bbHome)
 	if err != nil {
 		log.Printf("Error updating sidecar: %s", err.Error())
