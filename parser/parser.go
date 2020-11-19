@@ -21,74 +21,94 @@ type BazelOption struct {
 	Option string
 }
 
-func appendOptionsFromFile(in io.Reader, opts []*BazelOption) error {
+func appendOptionsFromImport(match []string, opts []*BazelOption) ([]*BazelOption, error) {
+	importPath := ""
+	for i, name := range importMatcher.SubexpNames() {
+		switch name {
+		case "relative":
+			if len(match[i]) > 0 {
+				importPath, _ = os.Getwd()
+			}
+		case "path":
+			importPath = filepath.Join(importPath, match[i])
+		}
+	}
+	file, err := os.Open(importPath)
+	if err != nil {
+		return opts, err
+	}
+	defer file.Close()
+	return appendOptionsFromFile(file, opts)
+}
+
+func optionFromMatch(match []string) *BazelOption {
+	o := &BazelOption{}
+	for i, name := range optionMatcher.SubexpNames() {
+		switch name {
+		case "phase":
+			o.Phase = match[i]
+		case "config":
+			o.Config = match[i]
+		case "option":
+			o.Option = match[i]
+		}
+	}
+	return o
+}
+
+func appendOptionsFromFile(in io.Reader, opts []*BazelOption) ([]*BazelOption, error) {
 	scanner := bufio.NewScanner(in)
+	var err error
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "#") {
-			log.Printf("Skipping line: %q", line)
 			continue
 		}
 
 		if importMatcher.MatchString(line) {
-			log.Printf("Import line: %q", line)
-			fp := ""
-
 			match := importMatcher.FindStringSubmatch(line)
-			for i, name := range importMatcher.SubexpNames() {
-				switch name {
-				case "relative":
-					if len(match[i]) > 0 {
-						fp, _ = os.Getwd()
-					}
-				case "path":
-					fp = filepath.Join(fp, match[i])
-				}
+			opts, err = appendOptionsFromImport(match, opts)
+			if err != nil {
+				log.Printf("Error parsing import: %s", err.Error())
 			}
-			log.Printf("fp is: %q", fp)
-			file, err := os.Open(fp)
-			if err == nil {
-				continue
-			}
-			if err := appendOptionsFromFile(file, opts); err != nil {
-				return err
-			}
-			file.Close()
 			continue
 		}
 
 		if optionMatcher.MatchString(line) {
 			match := optionMatcher.FindStringSubmatch(line)
-			o := &BazelOption{}
-			for i, name := range optionMatcher.SubexpNames() {
-				switch name {
-				case "phase":
-					o.Phase = match[i]
-				case "config":
-					o.Config = match[i]
-				case "option":
-					o.Option = match[i]
-				}
-			}
-
-			log.Printf("Option line: %q", line)
-			log.Printf("Parsed option: %+v", o)
-			opts = append(opts, o)
-			log.Printf("opts now has %d things", len(opts))
+			opts = append(opts, optionFromMatch(match))
 		}
 	}
-
-	return scanner.Err()
+	return opts, scanner.Err()
 }
 
-func ParseRCFile(filePath string) ([]*BazelOption, error) {
+func ParseRCFiles(filePaths ...string) ([]*BazelOption, error) {
 	options := make([]*BazelOption, 0)
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	if err := appendOptionsFromFile(file, options); err != nil {
-		return nil, err
+	for _, filePath := range filePaths {
+		file, err := os.Open(filePath)
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+		options, err = appendOptionsFromFile(file, options)
+		if err != nil {
+			continue
+		}
 	}
 	return options, nil
+}
+
+func GetRCFlagValue(options []*BazelOption, phase, config, flagName string) string {
+	for _, opt := range options {
+		if opt.Phase != phase {
+			continue
+		}
+		if opt.Config != config && opt.Config != "" {
+			continue
+		}
+		if strings.HasPrefix(opt.Option, flagName) {
+			return opt.Option
+		}
+	}
+	return ""
 }

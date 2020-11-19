@@ -152,18 +152,16 @@ func pathExists(p string) bool {
 }
 
 func startBackgroundProcess(cmd string, args []string) error {
+	log.Printf("cmd: %s, args: %s", cmd, args)
 	c := exec.Command(cmd, args...)
 	return c.Start()
 }
 
-func RestartSidecarIfNecessary(ctx context.Context, bbHomeDir string) (string, error) {
+func RestartSidecarIfNecessary(ctx context.Context, bbHomeDir string, args []string) (string, error) {
 	sidecarName := getSidecarBinaryName()
 	sidecarDir := filepath.Join(bbHomeDir, sidecarsSubdir)
 	latestInstalledVersion := getLatestInstalledSidecarVersion(sidecarDir, sidecarName)
-	binPath := filepath.Join(sidecarDir, latestInstalledVersion, sidecarName)
-
-	cmd := binPath
-	args := []string{}
+	cmd := filepath.Join(sidecarDir, latestInstalledVersion, sidecarName)
 
 	sockName := sockPrefix + hashStrings(append(args, cmd)) + ".sock"
 	sockPath := filepath.Join("/tmp/", sockName)
@@ -171,11 +169,13 @@ func RestartSidecarIfNecessary(ctx context.Context, bbHomeDir string) (string, e
 	// Check if a process is already running with this sock.
 	// If one is, we're all done!
 	if pathExists(sockPath) {
+		log.Printf("sidecar with args %s is already running.", args)
 		return sockPath, nil
 	}
 
 	// This is where we'll listen for bazel traffic
 	args = append(args, fmt.Sprintf("--listen_addr=unix://%s", sockPath))
+	log.Printf("starting sidecar with args: %s", args)
 	if err := startBackgroundProcess(cmd, args); err != nil {
 		return "", err
 	}

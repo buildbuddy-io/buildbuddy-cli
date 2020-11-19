@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/buildbuddy-io/buildbuddy-cli/cmd/buildbuddy",
     visibility = ["//visibility:private"],
     deps = [
+        "//commandline:go_default_library",
         "//parser:go_default_library",
         "//sidecar:go_default_library",
         "@com_github_bazelbuild_bazelisk//core:go_default_library",
