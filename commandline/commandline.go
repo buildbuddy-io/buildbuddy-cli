@@ -37,12 +37,16 @@ func ParseFlagsAndRewriteArgs(args []string) []string {
 	ourArgs := make([]string, 0, len(ourFlagNames))
 	newArgs := make([]string, 0, len(args))
 	for _, arg := range args {
+		wasOurs := false
 		for _, flagName := range ourFlagNames {
 			if strings.HasPrefix(arg, flagName) {
 				ourArgs = append(ourArgs, arg)
-			} else {
-				newArgs = append(newArgs, arg)
+				wasOurs = true
+				break
 			}
+		}
+		if !wasOurs {
+			newArgs = append(newArgs, arg)
 		}
 	}
 	flag.CommandLine.Parse(ourArgs) // ignore error.

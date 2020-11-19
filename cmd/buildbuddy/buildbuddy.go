@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,10 @@ import (
 	"github.com/buildbuddy-io/buildbuddy-cli/sidecar"
 
 	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
+)
+
+var (
+	disable = flag.Bool("disable_buildbuddy", false, "If true, disable buildbuddy functionality and just run bazel.")
 )
 
 func die(exitCode int, err error) {
@@ -65,6 +70,12 @@ func parseBazelRCs(bazelFlags *commandline.BazelFlags) []*parser.BazelOption {
 func main() {
 	// Parse any flags (and remove them so bazel isn't confused).
 	filteredOSArgs := commandline.ParseFlagsAndRewriteArgs(os.Args[1:])
+
+	if *disable {
+		bblog.Printf("Buildbuddy was disabled, just running bazel.")
+		runBazelAndDie(filteredOSArgs)
+	}
+
 	ctx := context.Background()
 
 	// Make sure we have a home directory to work in.

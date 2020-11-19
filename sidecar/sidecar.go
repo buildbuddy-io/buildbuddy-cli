@@ -2,6 +2,7 @@ package sidecar
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"hash/crc32"
 	"io/ioutil"
@@ -36,6 +37,10 @@ const (
 	timeBetweenUpdateChecks = 24 * time.Hour
 
 	sockPrefix = "sidecar-"
+)
+
+var (
+	forceUpdateCheck = flag.Bool("bb_force_update_check", false, "If true, force a check for buildbuddy updates.")
 )
 
 func getSidecarBinaryName() string {
@@ -90,6 +95,10 @@ func setLastUpdateCheck(bbHomeDir string) error {
 	return f.Close()
 }
 
+func shouldForceUpdateCheck() bool {
+	return os.Getenv("BB_ALWAYS_CHECK_FOR_UPDATES") != "" || *forceUpdateCheck
+}
+
 func MaybeUpdateSidecar(ctx context.Context, bbHomeDir string) (bool, error) {
 	sidecarDir := filepath.Join(bbHomeDir, sidecarsSubdir)
 	if err := os.MkdirAll(sidecarDir, 0755); err != nil {
@@ -106,7 +115,7 @@ func MaybeUpdateSidecar(ctx context.Context, bbHomeDir string) (bool, error) {
 	//  1) we already have a version
 	//  2) we've checked recently and
 	//  3) checking is not being forced
-	forceUpdateCheck := os.Getenv("BB_ALWAYS_CHECK_FOR_UPDATES") != ""
+	forceUpdateCheck := shouldForceUpdateCheck()
 	lastChecked, _ := getlastUpdateCheck(bbHomeDir)
 	if latestInstalledVersion != "" && time.Since(lastChecked) < timeBetweenUpdateChecks && !forceUpdateCheck {
 		bblog.Printf("Not checking for update, last checked at %s", lastChecked)
@@ -116,10 +125,13 @@ func MaybeUpdateSidecar(ctx context.Context, bbHomeDir string) (bool, error) {
 	// Check what is the latest sidecar on github.
 	bin, err := download.GetLatestSidecarFromGithub(ctx, sidecarName)
 	if err != nil {
+		bblog.Printf("Error getting latest release from github: %s", err.Error())
 		return false, err
 	}
 
 	setLastUpdateCheck(bbHomeDir) // ignore error; if it doesn't work we'll check again.
+
+	bblog.Printf("Latest release on github was %q, installed version is %q", bin.Version(), latestInstalledVersion)
 
 	// If there is an update available, download it.
 	if semver.Compare(bin.Version(), latestInstalledVersion) > 0 {

@@ -2,6 +2,7 @@ package download
 
 import (
 	"context"
+	"flag"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +16,14 @@ const (
 	bbOwner = "buildbuddy-io"
 	bbRepo  = "buildbuddy"
 )
+
+var (
+	prerelease = flag.Bool("bb_prerelease", false, "If true, allow buildbuddy prereleases.")
+)
+
+func shouldAllowPrereleases() bool {
+	return os.Getenv("BB_PRERELEASE") != "" || *prerelease
+}
 
 type Binary interface {
 	Version() string
@@ -48,7 +57,7 @@ func GetLatestSidecarFromGithub(ctx context.Context, sidecarName string) (Binary
 	if err != nil {
 		return nil, err
 	}
-	allowPrereleases := os.Getenv("BB_PRERELEASE") != ""
+	allowPrereleases := shouldAllowPrereleases()
 	for _, release := range releases {
 		if *release.Prerelease && !allowPrereleases {
 			log.Printf("Skipping prerelease %q", *release.TagName)
