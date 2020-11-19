@@ -7,7 +7,7 @@ import (
 	gflags "github.com/jessevdk/go-flags"
 )
 
-type bazelFlags struct {
+type BazelFlags struct {
 	Config string `long:"config" required:"false"`
 
 	BESBackend  string `long:"bes_backend" required:"false"`
@@ -19,8 +19,8 @@ type bazelFlags struct {
 	BazelRC       string `long:"bazelrc" required:"false"`
 }
 
-func ExtractBazelFlags(args []string) *bazelFlags {
-	bf := &bazelFlags{}
+func ExtractBazelFlags(args []string) *BazelFlags {
+	bf := &BazelFlags{}
 	parser := gflags.NewParser(bf, gflags.IgnoreUnknown)
 	parser.ParseArgs(args) // ignore error
 	return bf
@@ -46,7 +46,7 @@ func ParseFlagsAndRewriteArgs(args []string) []string {
 		}
 	}
 	flag.CommandLine.Parse(ourArgs) // ignore error.
-	return args
+	return newArgs
 }
 
 // Bazel has many subcommands, each with their own args. To know which options

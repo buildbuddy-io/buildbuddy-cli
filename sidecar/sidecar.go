@@ -16,6 +16,7 @@ import (
 	"golang.org/x/mod/semver"
 
 	"github.com/buildbuddy-io/buildbuddy-cli/download"
+	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
 )
 
 const (
@@ -108,7 +109,7 @@ func MaybeUpdateSidecar(ctx context.Context, bbHomeDir string) (bool, error) {
 	forceUpdateCheck := os.Getenv("BB_ALWAYS_CHECK_FOR_UPDATES") != ""
 	lastChecked, _ := getlastUpdateCheck(bbHomeDir)
 	if latestInstalledVersion != "" && time.Since(lastChecked) < timeBetweenUpdateChecks && !forceUpdateCheck {
-		log.Printf("Not checking for update, last checked at %s", lastChecked)
+		bblog.Printf("Not checking for update, last checked at %s", lastChecked)
 		return false, nil
 	}
 
@@ -122,7 +123,8 @@ func MaybeUpdateSidecar(ctx context.Context, bbHomeDir string) (bool, error) {
 
 	// If there is an update available, download it.
 	if semver.Compare(bin.Version(), latestInstalledVersion) > 0 {
-		log.Printf("Version %q is available, downloading...", bin.Version())
+		// Always log when we are updating.
+		log.Printf("Buildbuddy sidecar version %q is available, downloading...", bin.Version())
 		sidecarOutputDir := filepath.Join(sidecarDir, bin.Version())
 		if err := os.MkdirAll(sidecarOutputDir, 0755); err != nil {
 			return false, err
@@ -152,8 +154,8 @@ func pathExists(p string) bool {
 }
 
 func startBackgroundProcess(cmd string, args []string) error {
-	log.Printf("cmd: %s, args: %s", cmd, args)
 	c := exec.Command(cmd, args...)
+	bblog.Printf("running sidecar cmd: %s", c.String())
 	return c.Start()
 }
 
@@ -164,18 +166,17 @@ func RestartSidecarIfNecessary(ctx context.Context, bbHomeDir string, args []str
 	cmd := filepath.Join(sidecarDir, latestInstalledVersion, sidecarName)
 
 	sockName := sockPrefix + hashStrings(append(args, cmd)) + ".sock"
-	sockPath := filepath.Join("/tmp/", sockName)
+	sockPath := filepath.Join(os.TempDir(), sockName)
 
 	// Check if a process is already running with this sock.
 	// If one is, we're all done!
 	if pathExists(sockPath) {
-		log.Printf("sidecar with args %s is already running.", args)
+		bblog.Printf("sidecar with args %s is already running.", args)
 		return sockPath, nil
 	}
 
 	// This is where we'll listen for bazel traffic
 	args = append(args, fmt.Sprintf("--listen_addr=unix://%s", sockPath))
-	log.Printf("starting sidecar with args: %s", args)
 	if err := startBackgroundProcess(cmd, args); err != nil {
 		return "", err
 	}

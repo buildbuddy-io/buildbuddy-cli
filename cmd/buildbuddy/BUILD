@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//commandline:go_default_library",
+        "//logging:go_default_library",
         "//parser:go_default_library",
         "//sidecar:go_default_library",
         "@com_github_bazelbuild_bazelisk//core:go_default_library",

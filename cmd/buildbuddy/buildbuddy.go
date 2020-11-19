@@ -13,6 +13,8 @@ import (
 	"github.com/buildbuddy-io/buildbuddy-cli/commandline"
 	"github.com/buildbuddy-io/buildbuddy-cli/parser"
 	"github.com/buildbuddy-io/buildbuddy-cli/sidecar"
+
+	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
 )
 
 func die(exitCode int, err error) {
@@ -31,6 +33,33 @@ func runBazelAndDie(args []string) {
 
 	exitCode, err := core.RunBazelisk(args, repos)
 	die(exitCode, err)
+}
+
+func parseBazelRCs(bazelFlags *commandline.BazelFlags) []*parser.BazelOption {
+	rcFiles := make([]string, 0)
+	if !bazelFlags.NoSystemRC {
+		rcFiles = append(rcFiles, "/etc/bazel.bazelrc")
+		rcFiles = append(rcFiles, "%ProgramData%\bazel.bazelrc")
+	}
+	if !bazelFlags.NoWorkspaceRC {
+		rcFiles = append(rcFiles, ".bazelrc")
+	}
+	if !bazelFlags.NoHomeRC {
+		usr, err := user.Current()
+		if err == nil {
+			rcFiles = append(rcFiles, filepath.Join(usr.HomeDir, ".bazelrc"))
+		}
+	}
+	if bazelFlags.BazelRC != "" {
+		rcFiles = append(rcFiles, bazelFlags.BazelRC)
+	}
+	opts, err := parser.ParseRCFiles(rcFiles...)
+	if err != nil {
+		bblog.Printf("Error parsing .bazelrc file: %s", err.Error())
+		return nil
+	}
+	return opts
+
 }
 
 func main() {
@@ -52,28 +81,7 @@ func main() {
 	}
 
 	bazelFlags := commandline.ExtractBazelFlags(filteredOSArgs)
-	log.Printf("bazelFlags: %+v", bazelFlags)
-	rcFiles := make([]string, 0)
-	if !bazelFlags.NoSystemRC {
-		rcFiles = append(rcFiles, "/etc/bazel.bazelrc")
-		rcFiles = append(rcFiles, "%ProgramData%\bazel.bazelrc")
-	}
-	if !bazelFlags.NoWorkspaceRC {
-		rcFiles = append(rcFiles, ".bazelrc")
-	}
-	if !bazelFlags.NoHomeRC {
-		usr, err := user.Current()
-		if err == nil {
-			rcFiles = append(rcFiles, filepath.Join(usr.HomeDir, ".bazelrc"))
-		}
-	}
-	if bazelFlags.BazelRC != "" {
-		rcFiles = append(rcFiles, bazelFlags.BazelRC)
-	}
-	opts, err := parser.ParseRCFiles(rcFiles...)
-	if err != nil {
-		log.Printf("Error parsing .bazelrc file: %s", err.Error())
-	}
+	opts := parseBazelRCs(bazelFlags)
 
 	// Determine if cache or BES options are set.
 	subcommand := commandline.GetSubCommand(filteredOSArgs)
@@ -84,31 +92,40 @@ func main() {
 		runBazelAndDie(filteredOSArgs)
 	}
 
-	log.Printf("besBackendFlag was %q", besBackendFlag)
-	log.Printf("remoteCacheFlag was %q", remoteCacheFlag)
+	bblog.Printf("besBackendFlag was %q", besBackendFlag)
+	bblog.Printf("remoteCacheFlag was %q", remoteCacheFlag)
 
 	// Maybe update the sidecar? If we haven't recently.
 	updated, err := sidecar.MaybeUpdateSidecar(ctx, bbHome)
 	if err != nil {
-		log.Printf("Error updating sidecar: %s", err.Error())
+		bblog.Printf("Error updating sidecar: %s", err.Error())
 	}
-	log.Printf("Updated sidecar: %t", updated)
+	if updated {
+		bblog.Printf("Updated sidecar: %t", updated)
+	}
 
 	// Re(Start) the sidecar if the flags set don't match.
 	sidecarArgs := make([]string, 0)
 	if besBackendFlag != "" {
 		sidecarArgs = append(sidecarArgs, besBackendFlag)
 	}
-	// TODO(tylerw): enable once cache is supported by sidecar.
 	if remoteCacheFlag != "" {
 		sidecarArgs = append(sidecarArgs, remoteCacheFlag)
 	}
 
 	if len(sidecarArgs) > 0 {
 		sidecarSocket, err := sidecar.RestartSidecarIfNecessary(ctx, bbHome, sidecarArgs)
+		// TODO(tylerw): test the sidecar connection before passing it to bazel.
 		if err == nil {
-			filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--bes_backend=unix://%s", sidecarSocket))
+			if besBackendFlag != "" {
+				filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--bes_backend=unix://%s", sidecarSocket))
+			}
+			// // TODO(tylerw): enable once cache is supported by sidecar.
+			// if besBackendFlag != "" {
+			// 	filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--remote_cache=unix://%s", sidecarSocket))
+			// }
 		}
 	}
+	bblog.Printf("Rewrote bazel command line to: %s", filteredOSArgs)
 	runBazelAndDie(filteredOSArgs)
 }

@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//download:go_default_library",
+        "//logging:go_default_library",
         "@org_golang_x_mod//semver:go_default_library",
     ],
 )
