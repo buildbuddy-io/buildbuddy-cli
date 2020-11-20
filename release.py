@@ -108,12 +108,12 @@ def build_sidecar_artifacts(repo_name, new_version):
         "linux-arm64": "sidecar-linux-arm64",
         "windows": "sidecar-windows-amd64.exe",
     }
-    targets = ["server/cmd/sidecar:sidecar-" + arch for arch in arch_outputs]
+    targets = ["cmd/sidecar:sidecar-" + arch for arch in arch_outputs]
     sidecar_build_cmd = 'bazel build -c opt --stamp --define version=sidecar-%s --define release=true %s' % (new_version, " ".join(targets))
     run_or_die(sidecar_build_cmd)
     artifacts = []
     for ft in arch_outputs.values():
-        real_path = glob.glob('bazel-out/*-opt-*/bin/server/cmd/sidecar/%s' % ft)
+        real_path = glob.glob('bazel-out/*-opt-*/bin/cmd/sidecar/%s' % ft)
         if len(real_path) == 1:
             artifacts.append(real_path[0])
     return artifacts
@@ -125,12 +125,12 @@ def build_cli_artifacts(repo_name, new_version):
         "linux-arm64": "buildbuddy-linux-arm64",
         "windows": "buildbuddy-windows-amd64.exe",
     }
-    targets = ["server/cmd/buildbuddy:buildbuddy-" + arch for arch in arch_outputs]
+    targets = ["cmd/buildbuddy:buildbuddy-" + arch for arch in arch_outputs]
     buildbuddy_build_cmd = 'bazel build -c opt --stamp --define version=buildbuddy-%s --define release=true %s' % (new_version, " ".join(targets))
     run_or_die(buildbuddy_build_cmd)
     artifacts = []
     for ft in arch_outputs.values():
-        real_path = glob.glob('bazel-out/*-opt-*/bin/server/cmd/buildbuddy/%s' % ft)
+        real_path = glob.glob('bazel-out/*-opt-*/bin/cmd/buildbuddy/%s' % ft)
         if len(real_path) == 1:
             artifacts.append(real_path[0])
     return artifacts
