@@ -1,5 +1,6 @@
 workspace(
     name = "buildbuddy_cli",
+    managed_directories = {"@npm": ["node_modules"]},
 )
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -37,6 +38,16 @@ go_register_toolchains()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 gazelle_dependencies()
+
+# Node
+
+http_archive(
+    name = "build_bazel_rules_nodejs",
+    sha256 = "452bef42c4b2fbe0f509a2699ffeb3ae2c914087736b16314dbd356f3641d7e5",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/2.3.0/rules_nodejs-2.3.0.tar.gz"],
+)
+
+load("@build_bazel_rules_nodejs//:index.bzl", "yarn_install")
 
 # Docker
 
@@ -95,7 +106,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "com_github_buildbuddy_io_buildbuddy",
-    commit = "93983eca36810c91c5ae3a455b359ca107db3110",  # autoupdate buildbuddy-io/buildbuddy
+    commit = "feeff7d86fc266c93f05c46f7dab5d9462cca7f7",  # autoupdate buildbuddy-io/buildbuddy
     remote = "https://github.com/buildbuddy-io/buildbuddy.git",
 )
 
@@ -107,6 +118,18 @@ git_repository(
 load("@com_github_buildbuddy_io_buildbuddy//:deps.bzl", "install_buildbuddy_dependencies")
 
 install_buildbuddy_dependencies()
+
+yarn_install(
+    name = "npm",
+    package_json = "@com_github_buildbuddy_io_buildbuddy//:package.json",
+    yarn_lock = "@com_github_buildbuddy_io_buildbuddy//:yarn.lock",
+)
+
+# @bazel/labs (for ts_proto_library)
+
+load("@npm//@bazel/labs:package.bzl", "npm_bazel_labs_dependencies")
+
+npm_bazel_labs_dependencies()
 
 # We need to explicitly import this go_repo in buildbuddy-internal because Google cloud go
 # repositories share an internal dependency, and will not build without this.
