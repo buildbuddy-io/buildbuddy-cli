@@ -14,7 +14,7 @@ import (
 
 const (
 	bbOwner = "buildbuddy-io"
-	bbRepo  = "buildbuddy"
+	bbRepo  = "buildbuddy-cli"
 )
 
 var (
