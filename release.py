@@ -214,7 +214,7 @@ def create_release_and_upload_artifacts(repo, version, artifacts):
                 method='DELETE',
             )
             break
-        
+
     # Upload the artifacts.
     for artifact in artifacts:
         name = os.path.split(artifact)[-1]
@@ -241,7 +241,7 @@ def main():
 
     version_file = 'VERSION'
     org_name = "buildbuddy-io"
-    repo_name = "buildbuddy"
+    repo_name = "buildbuddy-cli"
 
     old_version = read_version(version_file)
     new_version = bump_patch_version(old_version)
@@ -256,8 +256,6 @@ def main():
     commit_version_bump(old_version, new_version)
     create_and_push_tag(old_version, new_version, release_notes)
 
-    ## Don't need this because github automatically creates a source archive when we
-    ## make a new tag. Useful when we have artifacts to upload.
     sidecar_artifacts = build_sidecar_artifacts(repo_name, new_version)
     cli_artifacts = build_cli_artifacts(repo_name, new_version)
     artifacts = sidecar_artifacts + cli_artifacts
