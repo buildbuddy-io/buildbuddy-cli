@@ -158,3 +158,5 @@ buildbuddy_deps()
 load("@io_buildbuddy_buildbuddy_toolchain//:rules.bzl", "buildbuddy")
 
 buildbuddy(name = "buildbuddy_toolchain")
+
+# gazelle:repository go_repository name=org_golang_x_sys importpath=golang.org/x/sys
