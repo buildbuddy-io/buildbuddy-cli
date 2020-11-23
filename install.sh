@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 read -r -d '' USAGE << EOM
 Usage: $0 [-b]
@@ -22,7 +22,9 @@ function new_install() {
     fi
     os=`uname -s` # Linux | Darwin
     os="$(tr [A-Z] [a-z] <<< "$os")"
-    curl -fsSL -o buildbuddy https://github.com/buildbuddy-io/cli/releases/latest/download/buildbuddy-$os-$arch && chmod 0755 buildbuddy && sudo mv buildbuddy /usr/local/bin/buildbuddy
+    tmpFile=$(mktemp buildbuddy.XXXXX)
+    trap "rm -f $tmpFile" 0 2 3 15
+    curl -fsSL -o $tmpFile https://github.com/buildbuddy-io/cli/releases/latest/download/buildbuddy-$os-$arch && chmod 0755 $tmpFile && sudo mv $tmpFile /usr/local/bin/buildbuddy
     exit 0
 }
 
