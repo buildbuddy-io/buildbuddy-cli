@@ -2,7 +2,7 @@
 
 Install BuildBuddy CLI
 ```
-curl -fsSL install.buildbuddy.io | sh
+curl -fsSL install.buildbuddy.io | bash
 ```
 
 Kick off a Bazel build using BuildBuddy UI
