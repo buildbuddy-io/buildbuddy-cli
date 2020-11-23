@@ -98,13 +98,15 @@ func main() {
 	subcommand := commandline.GetSubCommand(filteredOSArgs)
 	besBackendFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--bes_backend")
 	remoteCacheFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_cache")
+	remoteExecFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_executor")
 
 	if besBackendFlag == "" && remoteCacheFlag == "" {
 		runBazelAndDie(filteredOSArgs)
 	}
 
-	bblog.Printf("besBackendFlag was %q", besBackendFlag)
-	bblog.Printf("remoteCacheFlag was %q", remoteCacheFlag)
+	bblog.Printf("--bes_backened was %q", besBackendFlag)
+	bblog.Printf("--remote_cache was %q", remoteCacheFlag)
+	bblog.Printf("--remote_executor was %q", remoteExecFlag)
 
 	// Maybe update the sidecar? If we haven't recently.
 	updated, err := sidecar.MaybeUpdateSidecar(ctx, bbHome)
@@ -120,7 +122,7 @@ func main() {
 	if besBackendFlag != "" {
 		sidecarArgs = append(sidecarArgs, besBackendFlag)
 	}
-	if remoteCacheFlag != "" {
+	if remoteCacheFlag != "" && remoteExecFlag == "" {
 		sidecarArgs = append(sidecarArgs, remoteCacheFlag)
 	}
 
@@ -132,7 +134,7 @@ func main() {
 				filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--bes_backend=unix://%s", sidecarSocket))
 			}
 			// // TODO(tylerw): enable once cache is supported by sidecar.
-			// if besBackendFlag != "" {
+			// if remtoteCacheFlag != "" && remoteExecFlag == "" {
 			// 	filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--remote_cache=unix://%s", sidecarSocket))
 			// }
 		}

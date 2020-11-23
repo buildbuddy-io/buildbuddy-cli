@@ -10,8 +10,9 @@ import (
 type BazelFlags struct {
 	Config string `long:"config" required:"false"`
 
-	BESBackend  string `long:"bes_backend" required:"false"`
-	RemoteCache string `long:"remote_cache" required:"false"`
+	BESBackend     string `long:"bes_backend" required:"false"`
+	RemoteCache    string `long:"remote_cache" required:"false"`
+	RemoteExecutor string `long:"remote_executor" required:"false"`
 
 	NoSystemRC    bool   `long:"nosystem_rc" required:"false"`
 	NoWorkspaceRC bool   `long:"noworkspace_rc" required:"false"`
