@@ -3,11 +3,12 @@ package parser
 import (
 	"bufio"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
 )
 
 var (
@@ -69,7 +70,7 @@ func appendOptionsFromFile(in io.Reader, opts []*BazelOption) ([]*BazelOption, e
 			match := importMatcher.FindStringSubmatch(line)
 			opts, err = appendOptionsFromImport(match, opts)
 			if err != nil {
-				log.Printf("Error parsing import: %s", err.Error())
+				bblog.Printf("Error parsing import: %s", err.Error())
 			}
 			continue
 		}

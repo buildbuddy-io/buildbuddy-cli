@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/buildbuddy-io/buildbuddy/server/util/status"
 	"github.com/google/go-github/github"
+	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
 )
 
 const (
@@ -60,7 +60,7 @@ func GetLatestSidecarFromGithub(ctx context.Context, sidecarName string) (Binary
 	allowPrereleases := shouldAllowPrereleases()
 	for _, release := range releases {
 		if *release.Prerelease && !allowPrereleases {
-			log.Printf("Skipping prerelease %q", *release.TagName)
+			bblog.Printf("Skipping prerelease %q", *release.TagName)
 			continue
 		}
 		for _, asset := range release.Assets {
