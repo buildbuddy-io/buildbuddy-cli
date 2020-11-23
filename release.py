@@ -82,8 +82,8 @@ def update_version_in_file(old_version, new_version, version_file):
     edit_cmd = 'sed -i \'s/%s/%s/g\' %s' % (old_version, new_version, version_file)
     run_or_die(edit_cmd)
 
-def commit_version_bump(old_version, new_version):
-    commit_cmd = 'git commit -am "Bump version %s -> %s (release.py)"' % (old_version, new_version)
+def commit_version_bump(old_version, new_version, version_file):
+    commit_cmd = 'git commit -m "Bump version %s -> %s (release.py)" %s' % (old_version, new_version, version_file)
     run_or_die(commit_cmd)
 
 def create_and_push_tag(old_version, new_version, release_notes=''):
@@ -253,9 +253,11 @@ def main():
 
     time.sleep(2)
     update_version_in_file(old_version, new_version, version_file)
-    commit_version_bump(old_version, new_version)
+    commit_version_bump(old_version, new_version, version_file)
     create_and_push_tag(old_version, new_version, release_notes)
 
+    clean_cmd = 'bazel clean --expunge'
+    run_or_die(clean_cmd)
     sidecar_artifacts = build_sidecar_artifacts(repo_name, new_version)
     cli_artifacts = build_cli_artifacts(repo_name, new_version)
     artifacts = sidecar_artifacts + cli_artifacts
