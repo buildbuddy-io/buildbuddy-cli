@@ -133,10 +133,9 @@ func main() {
 			if besBackendFlag != "" {
 				filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--bes_backend=unix://%s", sidecarSocket))
 			}
-			// // TODO(tylerw): enable once cache is supported by sidecar.
-			// if remtoteCacheFlag != "" && remoteExecFlag == "" {
-			// 	filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--remote_cache=unix://%s", sidecarSocket))
-			// }
+			if remoteCacheFlag != "" && remoteExecFlag == "" {
+				filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--remote_cache=unix://%s", sidecarSocket))
+			}
 		}
 	}
 	bblog.Printf("Rewrote bazel command line to: %s", filteredOSArgs)

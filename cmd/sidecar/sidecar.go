@@ -1,18 +1,19 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net"
 	"strings"
 
+	"github.com/buildbuddy-io/buildbuddy-cli/cache_proxy"
+	"github.com/buildbuddy-io/buildbuddy-cli/devnull"
 	"github.com/buildbuddy-io/buildbuddy/server/build_event_protocol/build_event_proxy"
 	"github.com/buildbuddy-io/buildbuddy/server/build_event_protocol/build_event_server"
 	"github.com/buildbuddy-io/buildbuddy/server/config"
-	"github.com/buildbuddy-io/buildbuddy/server/interfaces"
 	"github.com/buildbuddy-io/buildbuddy/server/nullauth"
 	"github.com/buildbuddy-io/buildbuddy/server/real_environment"
+	"github.com/buildbuddy-io/buildbuddy/server/util/grpc_client"
 	"github.com/buildbuddy-io/buildbuddy/server/util/grpc_server"
 	"github.com/buildbuddy-io/buildbuddy/server/util/healthcheck"
 
@@ -20,7 +21,9 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	pepb "github.com/buildbuddy-io/buildbuddy/proto/publish_build_event"
+	repb "github.com/buildbuddy-io/buildbuddy/proto/remote_execution"
 	rpcfilters "github.com/buildbuddy-io/buildbuddy/server/rpc/filters"
+	bspb "google.golang.org/genproto/googleapis/bytestream"
 )
 
 var (
@@ -31,22 +34,6 @@ var (
 	remoteCache = flag.String("remote_cache", "grpcs://cloud.buildbuddy.io:443", "Server address to cache events to.")
 )
 
-type DevNullChannel struct{}
-
-func (c *DevNullChannel) MarkInvocationDisconnected(ctx context.Context, iid string) error {
-	return nil
-}
-func (c *DevNullChannel) FinalizeInvocation(iid string) error { return nil }
-func (c *DevNullChannel) HandleEvent(event *pepb.PublishBuildToolEventStreamRequest) error {
-	return nil
-}
-
-type DevNullBuildEventHandler struct{}
-
-func (h *DevNullBuildEventHandler) OpenChannel(ctx context.Context, iid string) interfaces.BuildEventChannel {
-	return &DevNullChannel{}
-}
-
 func main() {
 	flag.Parse()
 	configurator, err := config.NewConfigurator("")
@@ -56,7 +43,7 @@ func main() {
 	healthChecker := healthcheck.NewHealthChecker(*serverType)
 	env := real_environment.NewRealEnv(configurator, healthChecker)
 	env.SetAuthenticator(&nullauth.NullAuthenticator{})
-	env.SetBuildEventHandler(&DevNullBuildEventHandler{})
+	env.SetBuildEventHandler(&devnull.BuildEventHandler{})
 
 	var lis net.Listener
 	if strings.HasPrefix(*listenAddr, "unix://") {
@@ -78,17 +65,38 @@ func main() {
 	reflection.Register(grpcServer)
 	env.GetHealthChecker().RegisterShutdownFunction(grpc_server.GRPCShutdownFunc(grpcServer))
 
-	buildEventProxyClients := make([]pepb.PublishBuildEventClient, 0)
-	buildEventProxyClients = append(buildEventProxyClients, build_event_proxy.NewBuildEventProxyClient(*besBackend))
-	log.Printf("Proxy: forwarding build events to: %q", *besBackend)
-	env.SetBuildEventProxyClients(buildEventProxyClients)
+	if *besBackend != "" {
+		buildEventProxyClients := make([]pepb.PublishBuildEventClient, 0)
+		buildEventProxyClients = append(buildEventProxyClients, build_event_proxy.NewBuildEventProxyClient(*besBackend))
+		log.Printf("Proxy: forwarding build events to: %q", *besBackend)
+		env.SetBuildEventProxyClients(buildEventProxyClients)
 
-	// Register to handle build event protocol messages.
-	buildEventServer, err := build_event_server.NewBuildEventProtocolServer(env)
-	if err != nil {
-		log.Fatalf("Error initializing BuildEventProtocolServer: %s", err.Error())
+		// Register to handle build event protocol messages.
+		buildEventServer, err := build_event_server.NewBuildEventProtocolServer(env)
+		if err != nil {
+			log.Fatalf("Error initializing BuildEventProtocolServer: %s", err.Error())
+		}
+		pepb.RegisterPublishBuildEventServer(grpcServer, buildEventServer)
 	}
-	pepb.RegisterPublishBuildEventServer(grpcServer, buildEventServer)
 
-	grpcServer.Serve(lis)
+	if *remoteCache != "" {
+		conn, err := grpc_client.DialTarget(*remoteCache)
+		if err != nil {
+			log.Fatalf("Error dialing remote cache: %s", err.Error())
+		}
+		cacheProxy, err := cache_proxy.NewCacheProxy(conn)
+		if err != nil {
+			log.Fatalf("Error initializing cache proxy: %s", err.Error())
+		}
+		bspb.RegisterByteStreamServer(grpcServer, cacheProxy)
+		repb.RegisterActionCacheServer(grpcServer, cacheProxy)
+		repb.RegisterContentAddressableStorageServer(grpcServer, cacheProxy)
+		repb.RegisterCapabilitiesServer(grpcServer, cacheProxy)
+	}
+
+	if *besBackend != "" || *remoteCache != "" {
+		grpcServer.Serve(lis)
+	} else {
+		log.Fatal("No services configured. At least one of --bes_backend or --remote_cache must be provided!")
+	}
 }
