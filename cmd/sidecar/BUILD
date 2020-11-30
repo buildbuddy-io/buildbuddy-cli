@@ -10,6 +10,7 @@ go_library(
         "//devnull:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//proto:publish_build_event_go_proto",
         "@com_github_buildbuddy_io_buildbuddy//proto:remote_execution_go_proto",
+        "@com_github_buildbuddy_io_buildbuddy//server/backends/disk_cache:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/build_event_protocol/build_event_proxy:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/build_event_protocol/build_event_server:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/config:go_default_library",
