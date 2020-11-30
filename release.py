@@ -106,7 +106,7 @@ def build_sidecar_artifacts(repo_name, new_version):
         "darwin": "sidecar-darwin-amd64",
         "linux": "sidecar-linux-amd64",
         "linux-arm64": "sidecar-linux-arm64",
-        "windows": "sidecar-windows-amd64.exe",
+#        "windows": "sidecar-windows-amd64.exe",
     }
     targets = ["cmd/sidecar:sidecar-" + arch for arch in arch_outputs]
     sidecar_build_cmd = 'bazel build -c opt --stamp --define version=sidecar-%s --define release=true %s' % (new_version, " ".join(targets))
@@ -123,7 +123,7 @@ def build_cli_artifacts(repo_name, new_version):
         "darwin": "buildbuddy-darwin-amd64",
         "linux": "buildbuddy-linux-amd64",
         "linux-arm64": "buildbuddy-linux-arm64",
-        "windows": "buildbuddy-windows-amd64.exe",
+#        "windows": "buildbuddy-windows-amd64.exe",
     }
     targets = ["cmd/buildbuddy:buildbuddy-" + arch for arch in arch_outputs]
     buildbuddy_build_cmd = 'bazel build -c opt --stamp --define version=buildbuddy-%s --define release=true %s' % (new_version, " ".join(targets))
