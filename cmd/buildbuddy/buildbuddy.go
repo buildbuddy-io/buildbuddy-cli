@@ -124,6 +124,9 @@ func main() {
 	}
 	if remoteCacheFlag != "" && remoteExecFlag == "" {
 		sidecarArgs = append(sidecarArgs, remoteCacheFlag)
+               // Also specify as disk cache directory.
+               diskCacheDir := filepath.Join(bbHome, "filecache")
+               sidecarArgs = append(sidecarArgs, fmt.Sprintf("--cache_directory=%s", diskCacheDir))
 	}
 
 	if len(sidecarArgs) > 0 {
