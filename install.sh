@@ -24,7 +24,7 @@ function new_install() {
     os="$(tr [A-Z] [a-z] <<< "$os")"
     tmpFile=$(mktemp buildbuddy.XXXXX)
     trap "rm -f $tmpFile" 0 2 3 15
-    curl -fsSL -o $tmpFile https://github.com/buildbuddy-io/cli/releases/latest/download/buildbuddy-$os-$arch && chmod 0755 $tmpFile && sudo mv $tmpFile /usr/local/bin/buildbuddy
+    curl -fsSL -o $tmpFile https://github.com/buildbuddy-io/cli/releases/latest/download/buildbuddy-$os-$arch && chmod 0755 $tmpFile && sudo mv $tmpFile /usr/local/bin/bb
     exit 0
 }
 
