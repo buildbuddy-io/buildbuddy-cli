@@ -13,7 +13,6 @@ go_library(
         "@com_github_buildbuddy_io_buildbuddy//server/remote_cache/cachetools:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/remote_cache/content_addressable_storage_server:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/remote_cache/digest:go_default_library",
-        "@com_github_buildbuddy_io_buildbuddy//server/util/prefix:go_default_library",
         "@com_github_buildbuddy_io_buildbuddy//server/util/status:go_default_library",
         "@go_googleapis//google/bytestream:bytestream_go_proto",
         "@org_golang_google_grpc//:go_default_library",
