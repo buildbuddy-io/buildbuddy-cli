@@ -14,6 +14,8 @@ import (
 	"github.com/buildbuddy-io/buildbuddy-cli/commandline"
 	"github.com/buildbuddy-io/buildbuddy-cli/parser"
 	"github.com/buildbuddy-io/buildbuddy-cli/sidecar"
+	"github.com/buildbuddy-io/buildbuddy-cli/static_data"
+	"github.com/buildbuddy-io/buildbuddy/server/version"
 
 	bblog "github.com/buildbuddy-io/buildbuddy-cli/logging"
 )
@@ -100,6 +102,11 @@ func main() {
 	remoteCacheFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_cache")
 	remoteExecFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_executor")
 
+	if subcommand == "version" {
+		if b, ok := static_data.Data["VERSION"]; ok {
+			fmt.Printf("bb %s\n", version.AppVersion(b))
+		}
+	}
 	if besBackendFlag == "" && remoteCacheFlag == "" {
 		runBazelAndDie(filteredOSArgs)
 	}
@@ -124,9 +131,9 @@ func main() {
 	}
 	if remoteCacheFlag != "" && remoteExecFlag == "" {
 		sidecarArgs = append(sidecarArgs, remoteCacheFlag)
-               // Also specify as disk cache directory.
-               diskCacheDir := filepath.Join(bbHome, "filecache")
-               sidecarArgs = append(sidecarArgs, fmt.Sprintf("--cache_directory=%s", diskCacheDir))
+		// Also specify as disk cache directory.
+		diskCacheDir := filepath.Join(bbHome, "filecache")
+		sidecarArgs = append(sidecarArgs, fmt.Sprintf("--cache_directory=%s", diskCacheDir))
 	}
 
 	if len(sidecarArgs) > 0 {
