@@ -25,6 +25,9 @@ http_archive(
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_download_sdk", "go_register_toolchains", "go_rules_dependencies")
+load("@io_bazel_rules_go//extras:embed_data_deps.bzl", "go_embed_data_dependencies")
+
+go_embed_data_dependencies()
 
 go_download_sdk(
     name = "go_sdk",
@@ -106,7 +109,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "com_github_buildbuddy_io_buildbuddy",
-    commit = "feeff7d86fc266c93f05c46f7dab5d9462cca7f7",  # autoupdate buildbuddy-io/buildbuddy
+    commit = "08e2678b540695bb4cd522c468e3354bedc161f1",  # autoupdate buildbuddy-io/buildbuddy
     remote = "https://github.com/buildbuddy-io/buildbuddy.git",
 )
 

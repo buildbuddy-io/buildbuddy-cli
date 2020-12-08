@@ -1,6 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_go//go:def.bzl", "go_embed_data", "go_library")
 
 # Ignore the node_modules dir
 # gazelle:exclude node_modules
@@ -30,4 +31,21 @@ alias(
 alias(
     name = "yarn.lock",
     actual = "@com_github_buildbuddy_io_buildbuddy//:yarn.lock",
+)
+
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+      ":embedded_data",
+    ],
+    importpath = "github.com/buildbuddy-io/buildbuddy-cli/static_data",
+)
+
+go_embed_data(
+    name = "embedded_data",
+    srcs = [
+        "VERSION",
+    ],
+    package = "static_data",
 )
