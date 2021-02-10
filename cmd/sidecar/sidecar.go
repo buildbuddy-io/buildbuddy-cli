@@ -33,7 +33,7 @@ var (
 
 	listenAddr  = flag.String("listen_addr", "localhost:1991", "Local address to listen on.")
 	besBackend  = flag.String("bes_backend", "grpcs://cloud.buildbuddy.io:443", "Server address to proxy build events to.")
-	remoteCache = flag.String("remote_cache", "grpcs://cloud.buildbuddy.io:443", "Server address to cache events to.")
+	remoteCache = flag.String("remote_cache", "", "Server address to cache events to.")
 
 	cacheDir          = flag.String("cache_directory", "", "Root directory to use for local cache")
 	cacheMaxSizeBytes = flag.Int64("cache_max_size_bytes", 0, "Max cache size, in bytes")
