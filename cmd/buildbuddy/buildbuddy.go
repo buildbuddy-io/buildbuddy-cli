@@ -11,6 +11,7 @@ import (
 
 	"github.com/bazelbuild/bazelisk/core"
 	"github.com/bazelbuild/bazelisk/repositories"
+	"github.com/buildbuddy-io/buildbuddy-cli/autoconfig"
 	"github.com/buildbuddy-io/buildbuddy-cli/commandline"
 	"github.com/buildbuddy-io/buildbuddy-cli/parser"
 	"github.com/buildbuddy-io/buildbuddy-cli/sidecar"
@@ -94,13 +95,16 @@ func main() {
 	}
 
 	bazelFlags := commandline.ExtractBazelFlags(filteredOSArgs)
+	bazelFlags, filteredOSArgs = autoconfig.Configure(bazelFlags, filteredOSArgs)
 	opts := parseBazelRCs(bazelFlags)
 
 	// Determine if cache or BES options are set.
 	subcommand := commandline.GetSubCommand(filteredOSArgs)
-	besBackendFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--bes_backend")
-	remoteCacheFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_cache")
-	remoteExecFlag := parser.GetRCFlagValue(opts, subcommand, bazelFlags.Config, "--remote_executor")
+	besBackendFlag := parser.GetFlagValue(opts, subcommand, bazelFlags.Config, "--bes_backend", bazelFlags.BESBackend)
+	remoteCacheFlag := parser.GetFlagValue(opts, subcommand, bazelFlags.Config, "--remote_cache", bazelFlags.RemoteCache)
+	remoteExecFlag := parser.GetFlagValue(opts, subcommand, bazelFlags.Config, "--remote_executor", bazelFlags.RemoteExecutor)
+
+	filteredOSArgs = append(filteredOSArgs, "--tool_tag=buildbuddy-cli")
 
 	if subcommand == "version" {
 		if b, ok := static_data.Data["VERSION"]; ok {
@@ -145,6 +149,9 @@ func main() {
 			}
 			if remoteCacheFlag != "" && remoteExecFlag == "" {
 				filteredOSArgs = append(filteredOSArgs, fmt.Sprintf("--remote_cache=unix://%s", sidecarSocket))
+			}
+			if remoteExecFlag != "" {
+				filteredOSArgs = append(filteredOSArgs, remoteExecFlag)
 			}
 		}
 	}

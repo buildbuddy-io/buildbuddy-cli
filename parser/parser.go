@@ -99,7 +99,10 @@ func ParseRCFiles(filePaths ...string) ([]*BazelOption, error) {
 	return options, nil
 }
 
-func GetRCFlagValue(options []*BazelOption, phase, config, flagName string) string {
+func GetFlagValue(options []*BazelOption, phase, config, flagName, commandLineOverride string) string {
+	if commandLineOverride != "" {
+		return flagName + "=" + commandLineOverride
+	}
 	for _, opt := range options {
 		if opt.Phase != phase {
 			continue
