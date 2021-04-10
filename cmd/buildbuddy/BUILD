@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//:go_default_library",
+        "//autoconfig:go_default_library",
         "//commandline:go_default_library",
         "//logging:go_default_library",
         "//parser:go_default_library",

@@ -71,9 +71,10 @@ func initializeGRPCServer(env *real_environment.RealEnv) (*grpc.Server, net.List
 }
 
 func registerBESProxy(env *real_environment.RealEnv, grpcServer *grpc.Server) {
+	besTarget := normalizeGrpcTarget(*besBackend)
 	buildEventProxyClients := make([]pepb.PublishBuildEventClient, 0)
-	buildEventProxyClients = append(buildEventProxyClients, build_event_proxy.NewBuildEventProxyClient(*besBackend))
-	log.Printf("Proxy: forwarding build events to: %q", *besBackend)
+	buildEventProxyClients = append(buildEventProxyClients, build_event_proxy.NewBuildEventProxyClient(besTarget))
+	log.Printf("Proxy: forwarding build events to: %q", besTarget)
 	env.SetBuildEventProxyClients(buildEventProxyClients)
 
 	// Register to handle build event protocol messages.
@@ -85,7 +86,8 @@ func registerBESProxy(env *real_environment.RealEnv, grpcServer *grpc.Server) {
 }
 
 func registerCacheProxy(ctx context.Context, env *real_environment.RealEnv, grpcServer *grpc.Server) {
-	conn, err := grpc_client.DialTarget(*remoteCache)
+	cacheTarget := normalizeGrpcTarget(*remoteCache)
+	conn, err := grpc_client.DialTarget(cacheTarget)
 	if err != nil {
 		log.Fatalf("Error dialing remote cache: %s", err.Error())
 	}
@@ -97,6 +99,13 @@ func registerCacheProxy(ctx context.Context, env *real_environment.RealEnv, grpc
 	repb.RegisterActionCacheServer(grpcServer, cacheProxy)
 	repb.RegisterContentAddressableStorageServer(grpcServer, cacheProxy)
 	repb.RegisterCapabilitiesServer(grpcServer, cacheProxy)
+}
+
+func normalizeGrpcTarget(target string) string {
+	if strings.HasPrefix(target, "grpc://") || strings.HasPrefix(target, "grpcs://") {
+		return target
+	}
+	return "grpcs://" + target
 }
 
 func initializeDiskCache(env *real_environment.RealEnv) {
