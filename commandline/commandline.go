@@ -40,7 +40,7 @@ func ParseFlagsAndRewriteArgs(args []string) []string {
 	for _, arg := range args {
 		wasOurs := false
 		for _, flagName := range ourFlagNames {
-			if strings.HasPrefix(arg, flagName) {
+			if strings.HasPrefix(arg, flagName+"=") || arg == flagName {
 				ourArgs = append(ourArgs, arg)
 				wasOurs = true
 				break
