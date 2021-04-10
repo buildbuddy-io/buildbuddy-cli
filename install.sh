@@ -1,20 +1,5 @@
 #!/usr/bin/env bash
 
-read -r -d '' USAGE << EOM
-Usage: $0 [-b]
-       -b   -- If set, installs beta version of $0 CLI.
-EOM
-
-function usage() {
-    echo "$USAGE"
-    exit 1
-}
-
-function old_install() {
-    curl -fsSL -o bb https://raw.githubusercontent.com/buildbuddy-io/cli/master/bb && chmod 755 bb && sudo mv bb /usr/local/bin/bb
-    exit 0
-}
-
 function new_install() {
     arch=`uname -m`  # x86_64 | i386
     if [ "$arch" == "x86_64" ]; then
@@ -28,19 +13,4 @@ function new_install() {
     exit 0
 }
 
-# new world: detect arch and install go tool
-# old world: install the python script
-
-while getopts ":b" arg; do
-    case $arg in
-	b)
-	    new_install
-	    ;;
-	*)
-	    usage
-	    ;;
-    esac
-done
-if [ "$arg" == "?" ]; then
-    old_install
-fi
+new_install
